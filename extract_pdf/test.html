@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>PDF Search and Extract</title>
+  <script src="https://mozilla.github.io/pdf.js/build/pdf.js"></script>
+</head>
+<body>
+  <input type="file" id="pdfFile" accept=".pdf">
+  <input type="text" id="searchKeywords" placeholder="Enter keywords">
+  <button onclick="searchAndExtract()">Search and Extract</button>
+  <div id="output"></div>
+
+  <script>
+    async function searchAndExtract() {
+      const file = document.getElementById('pdfFile').files[0];
+      const keywords = document.getElementById('searchKeywords').value.trim().toLowerCase();
+
+      if (!file || !keywords) {
+        alert('Please select a PDF file and enter keywords.');
+        return;
+      }
+
+      const pdfData = await readFileAsArrayBuffer(file);
+      const pdfDoc = await pdfjsLib.getDocument(pdfData).promise;
+      const numPages = pdfDoc.numPages;
+
+      const extractedPages = [];
+
+      for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+        const page = await pdfDoc.getPage(pageNum);
+        const content = await page.streamTextContent();
+        const pageText = content.items.map(item => item.str).join('');
+
+        if (pageText.toLowerCase().includes(keywords)) {
+          extractedPages.push(pageNum);
+        }
+      }
+
+      if (extractedPages.length === 0) {
+        alert('No pages found containing the specified keywords.');
+        return;
+      }
+
+      const outputDiv = document.getElementById('output');
+      outputDiv.innerHTML = '';
+
+      for (const pageNum of extractedPages) {
+        const newPdfData = await pdfDoc.extractData({ pageNumbers: [pageNum] });
+        const newPdfBlob = new Blob([newPdfData], { type: 'application/pdf' });
+        const newPdfUrl = URL.createObjectURL(newPdfBlob);
+
+        const link = document.createElement('a');
+        link.href = newPdfUrl;
+        link.download = `extracted_page_${pageNum}.pdf`;
+        link.textContent = `Page ${pageNum}`;
+
+        outputDiv.appendChild(link);
+        outputDiv.appendChild(document.createElement('br'));
+      }
+    }
+
+    function readFileAsArrayBuffer(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsArrayBuffer(file);
+      });
+    }
+  </script>
+</body>
+</html>
