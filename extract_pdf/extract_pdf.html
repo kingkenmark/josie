@@ -3,23 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF Keyword Search</title>
+    <title>PDF Keyword Search and Extract</title>
 </head>
 <body>
     <h1>PDF Keyword Search and Extract</h1>
     <input type="file" id="pdf-upload" accept="application/pdf">
     <textarea id="keywords" placeholder="Enter keywords, one per line"></textarea>
     <button id="search-button">Search and Extract</button>
+
+    <h1>Scan for Negative Opening Balance</h1>
+    <button id="scan-opening-balance-button">Scan Opening Balance</button>
+
+    <h1>Insert to Print PDF</h1>
+    <input type="file" id="print-pdf-upload" accept="application/pdf">
+    <textarea id="new-keywords" placeholder="Enter new keywords, one per line"></textarea>
+    <button id="insert-to-print-button">Insert to Print PDF</button>
+
     <div id="output"></div>
 
-    <!-- Include PDF.js library from CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
-    <!-- Specify the workerSrc from the CDN -->
-    <script>
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js';
-    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
-    <!-- Include JSZip library from CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
     <script src="script.js"></script>
 </body>
