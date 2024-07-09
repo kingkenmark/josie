@@ -94,6 +94,7 @@ document.getElementById('scan-opening-balance-button').addEventListener('click',
     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
 
     const negativeBalancePages = [];
+    const negativeClosingBalancePages = [];
 
     for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
         const page = await pdf.getPage(pageNum);
@@ -114,12 +115,27 @@ document.getElementById('scan-opening-balance-button').addEventListener('click',
                 negativeBalancePages.push(pageNum);
             }
         }
+
+        const closingBalanceMatch = normalizedText.match(/Closing Balance\s+-?\$-?\d{1,3}(,\d{3})*(\.\d{2})?/);
+
+        if (closingBalanceMatch) {
+            const closingBalanceValue = parseFloat(openingBalanceMatch[0].replace(/Closing Balance\s+|\$/g, '').replace(/,/g, ''));
+
+            if (closingBalanceValue < 0) {
+                negativeClosingBalancePages.push(pageNum);
+            }
+        }
     }
 
     if (negativeBalancePages.length > 0) {
         outputDiv.innerHTML = `<p>Pages with negative "Opening Balance" value: ${negativeBalancePages.join(', ')}</p>`;
     } else {
         outputDiv.innerHTML = '<p>No pages with negative "Opening Balance" value found.</p>';
+    }
+    if (negativeClosingBalancePages.length > 0) {
+        outputDiv.innerHTML = `<p>Pages with negative "Closing Balance" value: ${negativeClosingBalancePages.join(', ')}</p>`;
+    } else {
+        outputDiv.innerHTML = '<p>No pages with negative "Closing Balance" value found.</p>';
     }
 });
 
