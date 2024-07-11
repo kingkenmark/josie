@@ -126,17 +126,18 @@ document.getElementById('scan-opening-balance-button').addEventListener('click',
             }
         }
     }
-
+    innerHTML = `Nothing`
     if (negativeBalancePages.length > 0) {
-        outputDiv.innerHTML = `<p>Pages with negative "Opening Balance" value: ${negativeBalancePages.join(', ')}</p>`;
+        innerHTML = `<p>Pages with negative "Opening Balance" value: ${negativeBalancePages.join(', ')}</p>`;
     } else {
-        outputDiv.innerHTML = '<p>No pages with negative "Opening Balance" value found.</p>';
+        innerHTML = '<p>No pages with negative "Opening Balance" value found.</p>';
     }
     if (negativeClosingBalancePages.length > 0) {
-        outputDiv.innerHTML = `<p>Pages with negative "Closing Balance" value: ${negativeClosingBalancePages.join(', ')}</p>`;
+        innerHTML = innerHTML + `<p>Pages with negative "Closing Balance" value: ${negativeClosingBalancePages.join(', ')}</p>`;
     } else {
-        outputDiv.innerHTML = '<p>No pages with negative "Closing Balance" value found.</p>';
+        innerHTML = innerHTML + '<p>No pages with negative "Closing Balance" value found.</p>';
     }
+    outputDiv.innerHTML = innerHTML
 });
 
 document.getElementById('insert-to-print-button').addEventListener('click', async () => {
@@ -169,7 +170,7 @@ document.getElementById('insert-to-print-button').addEventListener('click', asyn
             const text = textItems.join(' ');
             const normalizedText = text.replace(/\s+/g, ' ');
 
-            if (normalizedText.includes(normalizedKeyword) && normalizedText.includes('Home Care Package Statement') && normalizedText.includes('Case Manager')) {
+            if (normalizedText.includes(normalizedKeyword) && normalizedText.includes('Customer Id') && normalizedText.includes('Recipient Id')) {
                 userFound = true;
                 let insertionPageNum = pageNum;
 
@@ -181,13 +182,14 @@ document.getElementById('insert-to-print-button').addEventListener('click', asyn
                     const nextText = nextTextItems.join(' ');
                     const nextNormalizedText = nextText.replace(/\s+/g, ' ');
 
-                    if (nextNormalizedText.includes('Home Care Package Statement') && nextNormalizedText.includes('Case Manager')) {
+                    if (nextNormalizedText.includes('Customer Id') && nextNormalizedText.includes('Recipient Id')) {
                         insertionPageNum = nextPageNum - 1;
                         break;
                     }
                 }
 
                 // Insert the extracted PDF page
+                console.log(`Try to find pdf: ${normalizedKeyword.replace(/[^a-z0-9]/gi, '_')}.pdf`)
                 const extractedPdfBytes = await zip.file(`${normalizedKeyword.replace(/[^a-z0-9]/gi, '_')}.pdf`).async('arraybuffer');
                 const extractedPdf = await PDFLib.PDFDocument.load(extractedPdfBytes);
                 const [extractedPage] = await newPdfDoc.copyPages(extractedPdf, [0]);
