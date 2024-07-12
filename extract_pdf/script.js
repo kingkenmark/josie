@@ -94,7 +94,6 @@ document.getElementById('scan-opening-balance-button').addEventListener('click',
     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
 
     const negativeBalancePages = [];
-    const negativeClosingBalancePages = [];
 
     for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
         const page = await pdf.getPage(pageNum);
@@ -115,29 +114,13 @@ document.getElementById('scan-opening-balance-button').addEventListener('click',
                 negativeBalancePages.push(pageNum);
             }
         }
-
-        const closingBalanceMatch = normalizedText.match(/Closing Balance\s+-?\$-?\d{1,3}(,\d{3})*(\.\d{2})?/);
-
-        if (closingBalanceMatch) {
-            const closingBalanceValue = parseFloat(openingBalanceMatch[0].replace(/Closing Balance\s+|\$/g, '').replace(/,/g, ''));
-
-            if (closingBalanceValue < 0) {
-                negativeClosingBalancePages.push(pageNum);
-            }
-        }
     }
-    innerHTML = `Nothing`
+
     if (negativeBalancePages.length > 0) {
-        innerHTML = `<p>Pages with negative "Opening Balance" value: ${negativeBalancePages.join(', ')}</p>`;
+        outputDiv.innerHTML = `<p>Pages with negative "Opening Balance" value: ${negativeBalancePages.join(', ')}</p>`;
     } else {
-        innerHTML = '<p>No pages with negative "Opening Balance" value found.</p>';
+        outputDiv.innerHTML = '<p>No pages with negative "Opening Balance" value found.</p>';
     }
-    if (negativeClosingBalancePages.length > 0) {
-        innerHTML = innerHTML + `<p>Pages with negative "Closing Balance" value: ${negativeClosingBalancePages.join(', ')}</p>`;
-    } else {
-        innerHTML = innerHTML + '<p>No pages with negative "Closing Balance" value found.</p>';
-    }
-    outputDiv.innerHTML = innerHTML
 });
 
 document.getElementById('insert-to-print-button').addEventListener('click', async () => {
@@ -159,9 +142,13 @@ document.getElementById('insert-to-print-button').addEventListener('click', asyn
     const notFoundInPrint = [];
     const newPdfDoc = await PDFLib.PDFDocument.load(printArrayBuffer);
 
+    let currentInsertionOffset = 0;
+
     for (const keyword of newKeywords) {
         let userFound = false;
         const normalizedKeyword = keyword.replace(/\s+/g, ' ');
+
+        let insertionPageNum = -1;
 
         for (let pageNum = 1; pageNum <= printPdf.numPages && !userFound; pageNum++) {
             const page = await printPdf.getPage(pageNum);
@@ -172,9 +159,9 @@ document.getElementById('insert-to-print-button').addEventListener('click', asyn
 
             if (normalizedText.includes(normalizedKeyword) && normalizedText.includes('Customer Id') && normalizedText.includes('Recipient Id')) {
                 userFound = true;
-                let insertionPageNum = pageNum;
+                insertionPageNum = pageNum;
 
-                // Find the next occurrence of "Home Care Package Statement" and "Case Manager" after the current page
+                // Find the next occurrence of "Customer Id" and "Recipient Id" after the current page
                 for (let nextPageNum = pageNum + 1; nextPageNum <= printPdf.numPages; nextPageNum++) {
                     const nextPage = await printPdf.getPage(nextPageNum);
                     const nextTextContent = await nextPage.getTextContent();
@@ -183,26 +170,30 @@ document.getElementById('insert-to-print-button').addEventListener('click', asyn
                     const nextNormalizedText = nextText.replace(/\s+/g, ' ');
 
                     if (nextNormalizedText.includes('Customer Id') && nextNormalizedText.includes('Recipient Id')) {
-                        insertionPageNum = nextPageNum - 1;
+                        insertionPageNum = nextPageNum;
                         break;
                     }
-                }
-
-                // Insert the extracted PDF page
-                console.log(`Try to find pdf: ${normalizedKeyword.replace(/[^a-z0-9]/gi, '_')}.pdf`)
-                const extractedPdfBytes = await zip.file(`${normalizedKeyword.replace(/[^a-z0-9]/gi, '_')}.pdf`).async('arraybuffer');
-                const extractedPdf = await PDFLib.PDFDocument.load(extractedPdfBytes);
-                const [extractedPage] = await newPdfDoc.copyPages(extractedPdf, [0]);
-                newPdfDoc.insertPage(insertionPageNum, extractedPage);
-
-                // Insert a blank page if required
-                if (insertionPageNum < newPdfDoc.getPageCount() - 1) {
-                    newPdfDoc.insertPage(insertionPageNum + 1);
                 }
             }
         }
 
-        if (!userFound) {
+        if (userFound) {
+            console.log(`found ${normalizedKeyword}`);
+            const extractedPdfBytes = await zip.file(`${normalizedKeyword.replace(/[^a-z0-9]/gi, '_')}.pdf`).async('arraybuffer');
+            const extractedPdf = await PDFLib.PDFDocument.load(extractedPdfBytes);
+            const [extractedPage] = await newPdfDoc.copyPages(extractedPdf, [0]);
+
+            const actualInsertionPageNum = insertionPageNum + currentInsertionOffset;
+            newPdfDoc.insertPage(actualInsertionPageNum, extractedPage);
+
+            currentInsertionOffset++;
+
+            // Insert a blank page if not at the end
+            if (actualInsertionPageNum < newPdfDoc.getPageCount() - 1) {
+                newPdfDoc.insertPage(actualInsertionPageNum + 1);
+                currentInsertionOffset++;
+            }
+        } else {
             notFoundInPrint.push(keyword);
         }
     }
@@ -215,6 +206,7 @@ document.getElementById('insert-to-print-button').addEventListener('click', asyn
     finalPdfLink.href = finalPdfUrl;
     finalPdfLink.download = 'final_print_pdf.pdf';
     finalPdfLink.textContent = 'Download Final Print PDF';
+    outputDiv.appendChild(document.createElement('br'));
     outputDiv.appendChild(finalPdfLink);
 
     // Output the user names not found in the print PDF
