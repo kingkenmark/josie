@@ -142,7 +142,8 @@ document.getElementById('insert-to-print-button').addEventListener('click', asyn
     const notFoundInPrint = [];
     const newPdfDoc = await PDFLib.PDFDocument.load(printArrayBuffer);
 
-    let currentInsertionOffset = 0;
+    // Step 1: Locate the page number in the original PDF for each keyword
+    let insertionPoints = [];
 
     for (const keyword of newKeywords) {
         let userFound = false;
@@ -178,23 +179,35 @@ document.getElementById('insert-to-print-button').addEventListener('click', asyn
         }
 
         if (userFound) {
-            console.log(`found ${normalizedKeyword}`);
-            const extractedPdfBytes = await zip.file(`${normalizedKeyword.replace(/[^a-z0-9]/gi, '_')}.pdf`).async('arraybuffer');
-            const extractedPdf = await PDFLib.PDFDocument.load(extractedPdfBytes);
-            const [extractedPage] = await newPdfDoc.copyPages(extractedPdf, [0]);
-
-            const actualInsertionPageNum = insertionPageNum + currentInsertionOffset;
-            newPdfDoc.insertPage(actualInsertionPageNum, extractedPage);
-
-            currentInsertionOffset++;
-
-            // Insert a blank page if not at the end
-            if (actualInsertionPageNum < newPdfDoc.getPageCount() - 1) {
-                newPdfDoc.insertPage(actualInsertionPageNum + 1);
-                currentInsertionOffset++;
-            }
+            insertionPoints.push({ keyword, insertionPageNum });
         } else {
             notFoundInPrint.push(keyword);
+        }
+    }
+
+    // Step 2: Sort the result based on the page number
+    insertionPoints.sort((a, b) => a.insertionPageNum - b.insertionPageNum);
+
+    // Step 3: Insert based on the sorted result
+    let pagesInserted = 0;
+    console.log(`insertionPoints=${JSON.stringify(insertionPoints)}`);
+    for (const point of insertionPoints) {
+
+        const { keyword, insertionPageNum } = point;
+        console.log(`processed keyword=${keyword}, insertionPageNum=${insertionPageNum}`);
+        const extractedPdfBytes = await zip.file(`${keyword.replace(/[^a-z0-9]/gi, '_')}.pdf`).async('arraybuffer');
+        const extractedPdf = await PDFLib.PDFDocument.load(extractedPdfBytes);
+        const [extractedPage] = await newPdfDoc.copyPages(extractedPdf, [0]);
+
+        const actualInsertionPageNum = insertionPageNum + pagesInserted;
+        newPdfDoc.insertPage(actualInsertionPageNum-1, extractedPage);
+
+        pagesInserted++;
+
+        // Insert a blank page if not at the end
+        if (actualInsertionPageNum < newPdfDoc.getPageCount() - 1) {
+            newPdfDoc.insertPage(actualInsertionPageNum);
+            pagesInserted++;
         }
     }
 
@@ -215,3 +228,4 @@ document.getElementById('insert-to-print-button').addEventListener('click', asyn
         outputDiv.innerHTML += `<p>User names not found in print PDF: ${notFoundInPrint.join(', ')}</p>`;
     }
 });
+
