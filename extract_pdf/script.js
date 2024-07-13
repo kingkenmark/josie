@@ -43,7 +43,7 @@ document.getElementById('search-button').addEventListener('click', async () => {
                 newPdfDoc.addPage(copiedPage);
 
                 const pdfBytes = await newPdfDoc.save();
-                const filename = `${normalizedKeyword.replace(/[^a-z0-9]/gi, '_')}.pdf`;
+                const filename = `${normalizedKeyword.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`;
                 zip.file(filename, pdfBytes);
                 const url = URL.createObjectURL(new Blob([pdfBytes], { type: 'application/pdf' }));
                 const link = document.createElement('a');
@@ -147,7 +147,7 @@ document.getElementById('insert-to-print-button').addEventListener('click', asyn
 
     for (const keyword of newKeywords) {
         let userFound = false;
-        const normalizedKeyword = keyword.replace(/\s+/g, ' ');
+        const normalizedKeyword = keyword.replace(/\s+/g, ' ').toLowerCase();
 
         let insertionPageNum = -1;
 
@@ -156,9 +156,9 @@ document.getElementById('insert-to-print-button').addEventListener('click', asyn
             const textContent = await page.getTextContent();
             const textItems = textContent.items.map(item => item.str);
             const text = textItems.join(' ');
-            const normalizedText = text.replace(/\s+/g, ' ');
+            const normalizedText = text.replace(/\s+/g, ' ').toLowerCase();
 
-            if (normalizedText.includes(normalizedKeyword) && normalizedText.includes('Customer Id') && normalizedText.includes('Recipient Id')) {
+            if (normalizedText.includes(normalizedKeyword) && normalizedText.includes('customer id') && normalizedText.includes('recipient id')) {
                 userFound = true;
                 insertionPageNum = pageNum;
 
@@ -168,9 +168,9 @@ document.getElementById('insert-to-print-button').addEventListener('click', asyn
                     const nextTextContent = await nextPage.getTextContent();
                     const nextTextItems = nextTextContent.items.map(item => item.str);
                     const nextText = nextTextItems.join(' ');
-                    const nextNormalizedText = nextText.replace(/\s+/g, ' ');
+                    const nextNormalizedText = nextText.replace(/\s+/g, ' ').toLowerCase();
 
-                    if (nextNormalizedText.includes('Customer Id') && nextNormalizedText.includes('Recipient Id')) {
+                    if (nextNormalizedText.includes('customer id') && nextNormalizedText.includes('recipient id')) {
                         insertionPageNum = nextPageNum;
                         break;
                     }
@@ -195,18 +195,24 @@ document.getElementById('insert-to-print-button').addEventListener('click', asyn
 
         const { keyword, insertionPageNum } = point;
         console.log(`processed keyword=${keyword}, insertionPageNum=${insertionPageNum}`);
-        const extractedPdfBytes = await zip.file(`${keyword.replace(/[^a-z0-9]/gi, '_')}.pdf`).async('arraybuffer');
+        const fileName = `${keyword.replace(/[^a-z0-9]/gi, '_')}.pdf`.toLowerCase(); // Ensure the filename is lowercased
+        const extractedPdfFile = zip.file(fileName);
+        if (!extractedPdfFile) {
+            console.error(`File not found in zip: ${fileName}`);
+            continue;
+        }
+        const extractedPdfBytes = await extractedPdfFile.async('arraybuffer');
         const extractedPdf = await PDFLib.PDFDocument.load(extractedPdfBytes);
         const [extractedPage] = await newPdfDoc.copyPages(extractedPdf, [0]);
 
-        const actualInsertionPageNum = insertionPageNum + pagesInserted;
-        newPdfDoc.insertPage(actualInsertionPageNum-1, extractedPage);
+        const actualInsertionPageNum = insertionPageNum + pagesInserted - 1;
+        newPdfDoc.insertPage(actualInsertionPageNum, extractedPage);
 
         pagesInserted++;
 
         // Insert a blank page if not at the end
         if (actualInsertionPageNum < newPdfDoc.getPageCount() - 1) {
-            newPdfDoc.insertPage(actualInsertionPageNum);
+            newPdfDoc.insertPage(actualInsertionPageNum + 1);
             pagesInserted++;
         }
     }
@@ -228,4 +234,7 @@ document.getElementById('insert-to-print-button').addEventListener('click', asyn
         outputDiv.innerHTML += `<p>User names not found in print PDF: ${notFoundInPrint.join(', ')}</p>`;
     }
 });
+
+
+
 
