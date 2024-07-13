@@ -6,7 +6,7 @@
     <title>PDF and XML Handling</title>
 </head>
 <body>
-    <h1>PDF Keyword Search and Extract</h1>
+    <h1>PDF Keyword Search and Extract For Invoices</h1>
     <input type="file" id="pdf-upload" accept="application/pdf">
     <textarea id="keywords" placeholder="Enter keywords, one per line"></textarea>
     <button id="search-button">Search and Extract</button>
@@ -14,7 +14,7 @@
     <h1>Scan for Negative Opening Balance</h1>
     <button id="scan-opening-balance-button">Scan Opening Balance</button>
 
-    <h1>Insert to Print PDF</h1>
+    <h1>Insert invoices to Print PDF</h1>
     <input type="file" id="print-pdf-upload" accept="application/pdf">
     <textarea id="new-keywords" placeholder="Enter new keywords, one per line"></textarea>
     <button id="insert-to-print-button">Insert to Print PDF</button>
@@ -26,11 +26,20 @@
 
     <div id="output"></div>
 
+    <h1>Split Statements</h1>
+    <input type="file" id="split-pdf-upload">
+    <input type="text" id="filter-key" placeholder="Enter Filter Key">
+    <textarea id="value-list" placeholder="Enter values, one per line"></textarea>
+    <button id="split-button">Split Statements</button>
+
+    <div id="split-output"></div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
     <script src="script.js"></script>
     <script src="xml-script.js"></script>
+    <script src="split.js"></script>
 </body>
 </html>
