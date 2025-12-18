@@ -158,7 +158,7 @@ document.getElementById('insert-to-print-button').addEventListener('click', asyn
             const text = textItems.join(' ');
             const normalizedText = text.replace(/\s+/g, ' ').toLowerCase();
 
-            if (normalizedText.includes(normalizedKeyword) && normalizedText.includes('customer id') && normalizedText.includes('recipient id')) {
+            if (normalizedText.includes(normalizedKeyword) && normalizedText.includes('customer id') && normalizedText.includes('participant id')) {
                 userFound = true;
                 insertionPageNum = pageNum;
 
@@ -170,7 +170,7 @@ document.getElementById('insert-to-print-button').addEventListener('click', asyn
                     const nextText = nextTextItems.join(' ');
                     const nextNormalizedText = nextText.replace(/\s+/g, ' ').toLowerCase();
 
-                    if (nextNormalizedText.includes('customer id') && nextNormalizedText.includes('recipient id')) {
+                    if (nextNormalizedText.includes('customer id') && nextNormalizedText.includes('participant id')) {
                         insertionPageNum = nextPageNum;
                         break;
                     }
