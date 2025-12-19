@@ -24,6 +24,11 @@
     <button id="load-xml-button">Load XML</button>
     <div id="xml-output"></div>
 
+    <h1>Load XML as Excel (Detect Invalid Characters)</h1>
+    <input type="file" id="xml-excel-upload" accept=".xml">
+    <button id="load-xml-excel-button">Load XML to Excel</button>
+    <div id="xml-excel-output"></div>
+
     <div id="output"></div>
 
     <h1>Split Statements</h1>
@@ -38,8 +43,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.min.js"></script>
     <script src="script.js"></script>
     <script src="xml-script.js"></script>
+    <script src="xml-excel-script.js"></script>
     <script src="split.js"></script>
 </body>
 </html>

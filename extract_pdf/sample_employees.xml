@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<employees>
+    <employee>
+        <id>1</id>
+        <name>John Smith</name>
+        <department>Sales</department>
+        <salary>50000</salary>
+        <email>john.smith@company.com</email>
+    </employee>
+    <employee>
+        <id>2</id>
+        <name>Jane Doe</name>
+        <department>Marketing</department>
+        <salary>55000</salary>
+        <email>jane.doe@company.com</email>
+    </employee>
+    <employee>
+        <id>3</id>
+        <name>Bob Johnson</name>
+        <department>IT</department>
+        <salary>60000</salary>
+        <email>bob.johnson@company.com</email>
+    </employee>
+    <employee>
+        <id>4</id>
+        <name>Alice Williams</name>
+        <department>HR</department>
+        <salary>52000</salary>
+        <email>alice.williams@company.com</email>
+    </employee>
+    <employee>
+        <id>5</id>
+        <name>Charlie Brown</name>
+        <department>Finance</department>
+        <salary>58000</salary>
+        <email>charlie.brown@company.com</email>
+    </employee>
+</employees>
+

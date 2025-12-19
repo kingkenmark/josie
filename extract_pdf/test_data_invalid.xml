@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <row>
+        <name>John Doe</name>
+        <email>john@example.com</email>
+        <age>30</age>
+        <city>New York</city>
+    </row>
+    <row>
+        <name>Jane Smith</name>
+        <email>jane@example.com</email>
+        <age>28</age>
+        <city>Los Angeles</city>
+    </row>
+    <row>
+        <name>Bob Johnson</name>
+        <email>bob@example.com</email>
+        <age>35</age>
+        <city>Chicago</city>
+    </row>
+</root>
+
