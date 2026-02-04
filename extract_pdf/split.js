@@ -30,7 +30,7 @@ document.getElementById('split-button').addEventListener('click', async () => {
             processedValues++;
             const percentage = ((processedValues / totalValues) * 100).toFixed(2);
             progressIndicator.innerHTML = `Now has processed ${processedValues} of ${totalValues}: ${percentage}%`;
-            console.log(`Now processing ${value}...`);
+            console.log(`Now processing ${value}... la`);
 
             let valueFound = false;
             const normalizedSearchString = `${filterKey}\\s*\\s*${value}`.replace(/\s+/g, '\\s*').toLowerCase();
@@ -47,6 +47,7 @@ document.getElementById('split-button').addEventListener('click', async () => {
                 const regex = new RegExp(normalizedSearchString, 'i'); // Case-insensitive search
 
                 if (regex.test(normalizedText)) {
+                    console.log(`Found ${value} at ${pageNum}`);
                     valueFound = true;
                     startPageNum = pageNum;
 
