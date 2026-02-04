@@ -33,7 +33,7 @@ document.getElementById('split-button').addEventListener('click', async () => {
             console.log(`Now processing ${value}...`);
 
             let valueFound = false;
-            const normalizedSearchString = `${filterKey}\\s*:\\s*${value}`.replace(/\s+/g, '\\s*').toLowerCase();
+            const normalizedSearchString = `${filterKey}\\s*\\s*${value}`.replace(/\s+/g, '\\s*').toLowerCase();
 
             let startPageNum = -1;
 
@@ -58,7 +58,7 @@ document.getElementById('split-button').addEventListener('click', async () => {
                         const nextText = nextTextItems.join(' ');
                         const nextNormalizedText = nextText.replace(/\s+/g, ' ').toLowerCase();
 
-                        const nextRegex = new RegExp(`${filterKey}\\s*:`.replace(/\s+/g, '\\s*'), 'i'); // Case-insensitive search
+                        const nextRegex = new RegExp(`${filterKey}\\s*`.replace(/\s+/g, '\\s*'), 'i'); // Case-insensitive search
 
                         if (nextRegex.test(nextNormalizedText)) {
                             endPageNum = nextPageNum - 1;
