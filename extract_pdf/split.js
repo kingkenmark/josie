@@ -74,6 +74,11 @@ document.getElementById('split-button').addEventListener('click', async (event) 
                             newPdfDoc.addPage(extractedPage);
                         }
                     }
+
+                    // Add small delay every 10 pages to prevent timeout
+                    if (pageNum % 10 === 0) {
+                        await new Promise(resolve => setTimeout(resolve, 50));
+                    }
                 }
 
                 if (!valueFound) {
@@ -136,6 +141,7 @@ document.getElementById('zero-balance-button').addEventListener('click', async (
         const progressIndicator = document.createElement('p');
         zeroBalanceOutputDiv.appendChild(progressIndicator);
 
+        // Process pages with delay to prevent timeout on large PDFs
         for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
             try {
                 processedPages++;
@@ -171,6 +177,11 @@ document.getElementById('zero-balance-button').addEventListener('click', async (
                             });
                         }
                     }
+                }
+
+                // Add small delay every 10 pages to prevent timeout and allow UI updates
+                if (pageNum % 10 === 0) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
                 }
 
             } catch (error) {
