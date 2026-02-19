@@ -107,3 +107,89 @@ document.getElementById('split-button').addEventListener('click', async () => {
         splitOutputDiv.innerHTML += `<p>Values not found in PDF: ${notFoundValues.join(', ')}</p>`;
     }
 });
+
+document.getElementById('zero-balance-button').addEventListener('click', async () => {
+    const zeroBalanceFileInput = document.getElementById('zero-balance-pdf-upload');
+    const zeroBalanceOutputDiv = document.getElementById('zero-balance-output');
+    zeroBalanceOutputDiv.innerHTML = ''; // Clear previous output
+
+    if (zeroBalanceFileInput.files.length === 0) {
+        alert('Please select a PDF file.');
+        return;
+    }
+
+    const zeroBalanceFile = zeroBalanceFileInput.files[0];
+    const arrayBuffer = await zeroBalanceFile.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+    const zeroBalanceCustomers = [];
+    const totalPages = pdf.numPages;
+    let processedPages = 0;
+
+    const progressIndicator = document.createElement('p');
+    zeroBalanceOutputDiv.appendChild(progressIndicator);
+
+    for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+        try {
+            processedPages++;
+            const percentage = ((processedPages / totalPages) * 100).toFixed(2);
+            progressIndicator.innerHTML = `Processing ${processedPages} of ${totalPages} pages: ${percentage}%`;
+
+            const page = await pdf.getPage(pageNum);
+            const textContent = await page.getTextContent();
+            const textItems = textContent.items.map(item => item.str);
+            const fullText = textItems.join(' ');
+            const normalizedText = fullText.replace(/\s+/g, ' ').toLowerCase();
+
+            // Check if page contains "Support at Home Monthly Statement"
+            if (normalizedText.includes('support at home monthly statement')) {
+                console.log(`Found "Support at Home Monthly Statement" on page ${pageNum}`);
+
+                // Check for "$0.00" balance on this page - must be on same line
+                const zeroBalanceRegex = /Remaining\s+Support\s+at\s+Home\s+Balance[^$]*?\$0\.00/i;
+                if (zeroBalanceRegex.test(fullText)) {
+                    console.log(`Found $0.00 balance on page ${pageNum}`);
+
+                    // Extract customer ID using the pattern "Customer Id[blank chars]<customer id>"
+                    const customerIdRegex = /Customer\s+Id\s+(\S+)/i;
+                    const customerIdMatch = fullText.match(customerIdRegex);
+
+                    if (customerIdMatch) {
+                        const customerId = customerIdMatch[1].trim();
+                        console.log(`Extracted customer ID: ${customerId}`);
+                        zeroBalanceCustomers.push({
+                            customerId: customerId,
+                            pageNum: pageNum
+                        });
+                    }
+                }
+            }
+
+        } catch (error) {
+            console.error(`Error processing page ${pageNum}:`, error);
+            zeroBalanceOutputDiv.innerHTML += `<p>Error processing page ${pageNum}: ${error.message}</p>`;
+        }
+    }
+
+    // Display results
+    zeroBalanceOutputDiv.appendChild(document.createElement('br'));
+    if (zeroBalanceCustomers.length > 0) {
+        zeroBalanceOutputDiv.innerHTML += `<p><strong>Found ${zeroBalanceCustomers.length} customers with $0.00 balance:</strong></p>`;
+        const customerList = document.createElement('pre');
+        customerList.textContent = zeroBalanceCustomers.map(c => c.customerId).join('\n');
+        zeroBalanceOutputDiv.appendChild(customerList);
+
+        // Provide CSV download
+        const csvContent = zeroBalanceCustomers.map(c => c.customerId).join('\n');
+        const csvBlob = new Blob([csvContent], { type: 'text/csv' });
+        const csvUrl = URL.createObjectURL(csvBlob);
+        const csvLink = document.createElement('a');
+        csvLink.href = csvUrl;
+        csvLink.download = 'zero_balance_customers.csv';
+        csvLink.textContent = 'Download as CSV';
+        zeroBalanceOutputDiv.appendChild(document.createElement('br'));
+        zeroBalanceOutputDiv.appendChild(csvLink);
+    } else {
+        zeroBalanceOutputDiv.innerHTML += `<p>No customers with $0.00 balance found.</p>`;
+    }
+});
