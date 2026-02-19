@@ -134,6 +134,7 @@ document.getElementById('zero-balance-button').addEventListener('click', async (
             processedPages++;
             const percentage = ((processedPages / totalPages) * 100).toFixed(2);
             progressIndicator.innerHTML = `Processing ${processedPages} of ${totalPages} pages: ${percentage}%`;
+            console.log(`Processing page ${pageNum}...`);
 
             const page = await pdf.getPage(pageNum);
             const textContent = await page.getTextContent();
