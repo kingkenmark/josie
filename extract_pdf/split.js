@@ -217,3 +217,127 @@ document.getElementById('zero-balance-button').addEventListener('click', async (
         zeroBalanceOutputDiv.innerHTML += `<p>Error: ${error.message}</p>`;
     }
 });
+
+document.getElementById('inconsistent-budget-button').addEventListener('click', async (event) => {
+    try {
+        const inconsistentBudgetFileInput = document.getElementById('inconsistent-budget-pdf-upload');
+        const inconsistentBudgetOutputDiv = document.getElementById('inconsistent-budget-output');
+        inconsistentBudgetOutputDiv.innerHTML = ''; // Clear previous output
+
+        if (inconsistentBudgetFileInput.files.length === 0) {
+            alert('Please select a PDF file.');
+            return;
+        }
+
+        const inconsistentBudgetFile = inconsistentBudgetFileInput.files[0];
+        const arrayBuffer = await inconsistentBudgetFile.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+        const inconsistentBudgetCustomers = [];
+        const totalPages = pdf.numPages;
+        let processedPages = 0;
+
+        const progressIndicator = document.createElement('p');
+        inconsistentBudgetOutputDiv.appendChild(progressIndicator);
+
+        // Process pages with delay to prevent timeout on large PDFs
+        for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+            try {
+                processedPages++;
+                const percentage = ((processedPages / totalPages) * 100).toFixed(2);
+                progressIndicator.innerHTML = `Processing ${processedPages} of ${totalPages} pages: ${percentage}%`;
+                console.log(`Processing page ${pageNum}...`);
+
+                const page = await pdf.getPage(pageNum);
+                const textContent = await page.getTextContent();
+                const textItems = textContent.items.map(item => item.str);
+                const fullText = textItems.join(' ');
+                const normalizedText = fullText.replace(/\s+/g, ' ').toLowerCase();
+
+                // Check if page contains "Support at Home Monthly Statement"
+                if (normalizedText.includes('support at home monthly statement')) {
+                    console.log(`Found "Support at Home Monthly Statement" on page ${pageNum}`);
+
+                    // Extract Support at Home account summary balance
+                    // Pattern: "Support at Home account summary[chars]$<balance>"
+                    const supportBalanceRegex = /Support\s+at\s+Home\s+account\s+summary[^$]*?\$([0-9,]+\.[0-9]{2})/i;
+                    const supportBalanceMatch = fullText.match(supportBalanceRegex);
+
+                    // Extract Quarterly Budget balance
+                    // Pattern: "Quarterly Budget[blank chars]$<balance>"
+                    const quarterlyBudgetRegex = /Quarterly\s+Budget\s+[^$]*?\$([0-9,]+\.[0-9]{2})/i;
+                    const quarterlyBudgetMatch = fullText.match(quarterlyBudgetRegex);
+
+                    // Only proceed if both balances are found
+                    if (supportBalanceMatch && quarterlyBudgetMatch) {
+                        const supportBalance = parseFloat(supportBalanceMatch[1].replace(/,/g, ''));
+                        const quarterlyBudgetBalance = parseFloat(quarterlyBudgetMatch[1].replace(/,/g, ''));
+
+                        console.log(`Found Support Balance: $${supportBalance}, Quarterly Budget Balance: $${quarterlyBudgetBalance}`);
+
+                        // Check if balances are different
+                        if (Math.abs(supportBalance - quarterlyBudgetBalance) > 0.001) {
+                            console.log(`Found inconsistent balances on page ${pageNum}`);
+
+                            // Extract customer ID using the pattern "Customer Id[blank chars]<customer id>"
+                            const customerIdRegex = /Customer\s+Id\s+(\S+)/i;
+                            const customerIdMatch = fullText.match(customerIdRegex);
+
+                            if (customerIdMatch) {
+                                const customerId = customerIdMatch[1].trim();
+                                console.log(`Extracted customer ID: ${customerId}`);
+                                inconsistentBudgetCustomers.push({
+                                    customerId: customerId,
+                                    pageNum: pageNum,
+                                    supportBalance: supportBalance,
+                                    quarterlyBudgetBalance: quarterlyBudgetBalance,
+                                    difference: Math.abs(supportBalance - quarterlyBudgetBalance)
+                                });
+                            }
+                        }
+                    }
+                }
+
+                // Add small delay every 10 pages to prevent timeout and allow UI updates
+                if (pageNum % 10 === 0) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+
+            } catch (error) {
+                console.error(`Error processing page ${pageNum}:`, error);
+                inconsistentBudgetOutputDiv.innerHTML += `<p>Error processing page ${pageNum}: ${error.message}</p>`;
+            }
+        }
+
+        // Display results
+        inconsistentBudgetOutputDiv.appendChild(document.createElement('br'));
+        if (inconsistentBudgetCustomers.length > 0) {
+            inconsistentBudgetOutputDiv.innerHTML += `<p><strong>Found ${inconsistentBudgetCustomers.length} customers with inconsistent budgets:</strong></p>`;
+            const customerList = document.createElement('pre');
+            customerList.textContent = inconsistentBudgetCustomers.map(c =>
+                `${c.customerId} (Support: $${c.supportBalance.toFixed(2)}, Quarterly: $${c.quarterlyBudgetBalance.toFixed(2)}, Diff: $${c.difference.toFixed(2)})`
+            ).join('\n');
+            inconsistentBudgetOutputDiv.appendChild(customerList);
+
+            // Provide CSV download with details
+            const csvContent = ['Customer ID,Support at Home Balance,Quarterly Budget Balance,Difference']
+                .concat(inconsistentBudgetCustomers.map(c =>
+                    `${c.customerId},$${c.supportBalance.toFixed(2)},$${c.quarterlyBudgetBalance.toFixed(2)},$${c.difference.toFixed(2)}`
+                )).join('\n');
+            const csvBlob = new Blob([csvContent], { type: 'text/csv' });
+            const csvUrl = URL.createObjectURL(csvBlob);
+            const csvLink = document.createElement('a');
+            csvLink.href = csvUrl;
+            csvLink.download = 'inconsistent_budget_customers.csv';
+            csvLink.textContent = 'Download as CSV';
+            inconsistentBudgetOutputDiv.appendChild(document.createElement('br'));
+            inconsistentBudgetOutputDiv.appendChild(csvLink);
+        } else {
+            inconsistentBudgetOutputDiv.innerHTML += `<p>No customers with inconsistent budgets found.</p>`;
+        }
+    } catch (error) {
+        console.error('Error in inconsistent budget function:', error);
+        const inconsistentBudgetOutputDiv = document.getElementById('inconsistent-budget-output');
+        inconsistentBudgetOutputDiv.innerHTML += `<p>Error: ${error.message}</p>`;
+    }
+});
